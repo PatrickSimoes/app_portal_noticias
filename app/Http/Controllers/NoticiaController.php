@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Noticia;
 use App\Http\Requests\StoreNoticiaRequest;
 use App\Http\Requests\UpdateNoticiaRequest;
-use App\Models\Noticia;
+use Illuminate\Support\Facades\Cache;
 
 class NoticiaController extends Controller
 {
@@ -13,7 +14,28 @@ class NoticiaController extends Controller
      */
     public function index()
     {
-        $noticias = Noticia::orderbyDesc('created_at')->limit(10)->get();
+        //criar um dado dentro do bd Redis
+        //Cache::put('site', 'www.google.com', 10);
+        //chave, valor, tempo em segundos para expirar o dado em memória
+
+        //recuperar um dado dentro do bd Redis
+        //$site = Cache::get('site');
+        //echo $site;
+
+        $noticias = [];
+        
+        /*
+        if(Cache::has('dez_primeiras_noticias')) {
+            $noticias = Cache::get('dez_primeiras_noticias');
+        } else {
+            $noticias = Noticia::orderByDesc('created_at')->limit(10)->get();
+            Cache::put('dez_primeiras_noticias', $noticias, 15);
+        }       
+        */
+        
+        $noticias = Cache::remember('dez_primeiras_noticias', 15, function() {
+            return Noticia::orderByDesc('created_at')->limit(10)->get();
+        });
 
         return view('noticia', ['noticias' => $noticias]);
     }
